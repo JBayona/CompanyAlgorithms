@@ -16,37 +16,66 @@ https://leetcode.com/problems/merge-intervals/
 */
 
 // Updated
-
+// Time O(NLogN)
+// Space O(N)
+// Option 1
 var merge = function(intervals) {
-  let result = [];
-  let index = null;
-
-  if(!intervals || !intervals.length) {
-        return [];
-    }
+  if(!intervals.length) {
+      return [];
+  }
+  // Sort based on start
+  intervals.sort((a,b) => a[0] - b[0]);
   
-  // Sort using start time as point of sorting
-  // Use a comparator
-  //[0] - Start time
-  //[1] - End time
-  intervals = intervals.sort((a,b) => a[0] - b[0]);
-
-  let pre = intervals[0];
-    for(let i = 0; i < intervals.length; i++){
-      let curr = intervals[i];
-      if(curr[0] > pre[1]) {
-          result.push(pre);
-          pre = curr;
-      } else{
-          let merged = [pre[0], Math.max(pre[1], curr[1])];
-          pre = merged;
+  let result = [];
+  let prev = intervals[0];
+  for(let i = 1; i < intervals.length; i++) {
+      let interval = intervals[i];
+      // If the end of the prev interval is greater than the start
+      // of the current interval, it means we have an override
+      if(prev[1] >= interval[0]) {
+          prev = [prev[0], Math.max(prev[1], interval[1])];
+      } else {
+          result.push(prev);
+          prev = interval;
       }
-    }
-  // The missing one
-  result.push(pre);
-
+  }
+  // The last missing one
+  result.push(prev);
   return result;
 };
+
+
+// Option 2
+// Time O(LogN)
+// Min Heap
+var merge = function(intervals) {
+  if(!intervals.length) {
+      return [];
+  }
+  
+  const minHeap = new PriorityQueue(compare = (a, b) => a[0] - b[0]);
+
+  // Add everything to the heap
+  for (let interval of intervals) {
+      minHeap.enqueue(interval);
+  }
+
+  let result = []
+  while (!minHeap.isEmpty()) {
+      let current = minHeap.dequeue();
+      // Check if there's override with the next element
+      while (!minHeap.isEmpty() && current[1] >= minHeap.front()[0]) {
+          // Remove it from queue as it has an overlap
+          let tmp = minHeap.dequeue();
+          current[0] = Math.min(tmp[0], current[0]);
+          current[1] = Math.max(tmp[1], current[1]);
+      }
+      // At this point the overlap is resolved
+      result.push(current);
+  }
+  return result;
+};
+
 
 function Interval(start, end) {
   this.start = start;
